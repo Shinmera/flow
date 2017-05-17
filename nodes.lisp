@@ -21,41 +21,77 @@
   ())
 
 (defclass connection (unit)
-  (left
-   right))
+  ((left :initarg :left :accessor left)
+   (right :initarg :right :accessor right)))
 
 (defclass directed-connection (connection)
-  (direction))
+  ((direction :initarg :direction :accessor direction))
+  (:default-initargs
+   :direction :left->right))
 
-(defclass port (unit)
-  (node
-   connections))
-
-(defclass 1-port (port)
+(defclass node-class (standard-class)
   ())
 
-(defmethod accepting-p (connection node (port 1-port))
-  (null (connections port)))
+(defmethod c2mop:validate-superclass ((class node-class) (superclass t))
+  NIL)
 
-(defclass n-port (port)
-  ())
-
-(defmethod accepting-p (connection node (port n-port))
+(defmethod c2mop:validate-superclass ((class standard-class) (superclass node-class))
   T)
 
+(defmethod c2mop:validate-superclass ((class node-class) (superclass standard-class))
+  T)
+
+(defmethod c2mop:validate-superclass ((class node-class) (superclass node-class))
+  T)
+
+(defclass port-definition (c2mop:standard-direct-slot-definition)
+  ((port-type :initarg :port-type :accessor port-type))
+  (:default-initargs
+   :port-type 'c2mop:standard-effective-slot-definition))
+
+(defclass port (c2mop:standard-effective-slot-definition)
+  ())
+
+(defmethod c2mop:compute-effective-slot-definition ((class port-class) name direct-slots)
+  (declare (ignore name))
+  (let ((effective-slot (call-next-method)))
+    (loop for direct-slot in direct-slots
+          do (when (and (typep direct-slot 'port-definition)
+                        (eql (c2mop:slot-definition-name direct-slot)
+                             (c2mop:slot-definition-name effective-slot)))
+               (change-class effective-slot (port-type direct-slot))
+               (loop-finish)))
+    effective-slot))
+
+(defmethod c2mop:direct-slot-definition-class ((class port-class) &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'port-direct-slot-definition))
+
+(defmethod c2mop:effective-slot-definition-class ((class port-class) &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'c2mop:standard-effective-slot-definition))
+
 (defclass node (unit)
-  (ports))
+  ()
+  (:metaclass node-class))
+
+(defmacro define-node (name direct-superclasses direct-slots &rest options)
+  (unless (find :metaclass options :key #'first)
+    (push `(:metaclass node-class) options))
+  `(defclass ,name (,@direct-superclasses node)
+     ,direct-slots
+     ,@options))
 
 #+NIL
 (progn
   (define-node decision ()
-    (:ports (in n-port)
-            (true 1-port)
-            (false 1-port)))
+    ((in :type n-port)
+     (true :type 1-port)
+     (false :type 1-port)))
 
   (define-node process ()
-    (:ports (in n-port)
-            (out n-port)))
+    ((in :type n-port)
+     (out :type n-port)))
 
   (let ((a (make-instance 'decision))
         (b (make-instance 'process)))

@@ -16,4 +16,5 @@
   :components ((:file "package")
                (:file "nodes")
                (:file "documentation"))
-  :depends-on (:documentation-utils))
+  :depends-on (:documentation-utils
+               :closer-mop))
