@@ -35,7 +35,30 @@
                          (connect (right connection) (left connection)))))))
       (values vertices edges))))
 
-(defun topological-sort (root-node))
+(defun topological-sort (node)
+  (let ((sorted ())
+        (visited (make-hash-table :test 'eq)))
+    (labels ((%visit (node)
+               (case (gethash node visited)
+                 (:temporary
+                  (error "The graph contains cycles."))
+                 (:permanently)
+                 ((NIL)
+                  (setf (gethash node visited) :temporary)
+                  (dolist (connection (connections node))
+                    (etypecase connection
+                      (directed-connection
+                       (when (eql node (left connection))
+                         (%visit (right connection))))
+                      (connection
+                       (cond ((eql node (left connection))
+                              (%visit (right connection)))
+                             ((eql node (right connection))
+                              (%visit (left connection)))))))
+                  (setf (gethash node visited) :permanently)
+                  (push node sorted)))))
+      (%visit node))
+    sorted))
 
 (defun color-nodes (root-node))
 
