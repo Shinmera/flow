@@ -6,16 +6,7 @@
 
 (in-package #:org.shirakumo.flow)
 
-(defgeneric attribute (unit attribute))
-(defgeneric (setf attribute) (value unit attribute))
-(defgeneric represent (unit target))
-(defgeneric sever (unit))
-(defgeneric ports (node))
-(defgeneric port (node name))
-(defgeneric connections (unit))
-(defgeneric (setf connections) (connections port))
-(defgeneric accepting-p (connection port))
-(defgeneric connect (from to &optional connection-type &rest initargs))
+(defvar *resolve-port* T)
 
 (defclass unit ()
   ())
@@ -24,24 +15,63 @@
   ((left :initarg :left :accessor left)
    (right :initarg :right :accessor right)))
 
+(defmethod connection= (a b)
+  (or (and (eql (left a) (left b))
+           (eql (right a) (right b)))
+      (and (eql (left a) (right b))
+           (eql (right a) (left b)))))
+
+(defmethod sever ((connection connection))
+  (remove-connection connection (left connection))
+  (remove-connection connection (right connection))
+  connection)
+
 (defclass directed-connection (connection)
   ())
+
+(defmethod connection= ((a directed-connection) (b directed-connection))
+  (or (and (eql (left a) (left b))
+           (eql (right a) (right b)))))
 
 (defclass port (unit)
   ((connections :initarg :connections :initform () :accessor connections)
    (node :initarg :node :initform NIL :accessor node)))
 
+(defmethod connect ((left port) (right port) &optional (connection-type 'connection) &rest initargs)
+  (let ((connection (apply #'make-instance connection-type :left left :right right initargs)))
+    (check-connection-accepted connection left)
+    (check-connection-accepted connection right)
+    (push connection (connections left))
+    (push connection (connections right))
+    connection))
+
+(defmethod disconnect ((left port) (right port))
+  (let ((connection (make-instance 'directed-connection :left left :right right)))
+    (remove-connection connection left :test #'connection=)
+    (remove-connection connection right :test #'connection=)
+    NIL))
+
+(defmethod remove-connection (connection (port port) &key (test #'eql))
+  (setf (connections port) (remove connection (connections port) :test test)))
+
+(defmethod check-connection-accepted (new-connection (port port))
+  (loop for connection in (connections port)
+        do (when (connection= connection new-connection)
+             (error "An equivalent connection already exists."))))
+
+(defmethod sever ((port port))
+  (mapc #'sever (connections port)))
+
 (defclass n-port (port)
   ())
-
-(defmethod accepting-p (connection (port n-port))
-  T)
 
 (defclass 1-port (port)
   ())
 
-(defmethod accepting-p (connection (port 1-port))
-  (null (connections port)))
+(defmethod check-connection-accepted (connection (port 1-port))
+  (call-next-method)
+  (when (connections port)
+    (error "A connection already exists on this port.")))
 
 (defclass port-definition ()
   ((port-type :initarg :port-type :accessor port-type))
@@ -96,8 +126,31 @@
 (defmethod port ((node node-class) (name symbol))
   (let ((slot (find name (c2mop:class-slots node)
                     :key #'c2mop:slot-definition-name)))
-    (when (port-type slot)
+    (unless (port-type slot)
+      (error "The slot ~a in ~a is not a port." name (class-name node)))
+    (let ((*resolve-port* NIL))
       (slot-value node name))))
+
+(defmethod c2mop:slot-value-using-class ((node node-class) object (slot effective-port-definition))
+  (let ((port (call-next-method)))
+    (if (and (port-type slot) *resolve-port*)
+        (connections port)
+        port)))
+
+(defmethod (setf c2mop:slot-value-using-class) (value (node node-class) object (slot effective-port-definition))
+  (if (and (port-type slot) *resolve-port*)
+      (setf (connections (c2mop:slot-value-using-class node object slot)) value)
+      (call-next-method)))
+
+(defmethod c2mop:slot-boundp-using-class ((node node-class) object (slot effective-port-definition))
+  (if (and (port-type slot) *resolve-port*)
+      (slot-boundp (c2mop:slot-value-using-class node object slot) 'connections)
+      (call-next-method)))
+
+(defmethod c2mop:slot-makunbound-using-class ((node node-class) object (slot effective-port-definition))
+  (if (and (port-type slot) *resolve-port*)
+      (slot-makunbound (c2mop:slot-value-using-class node object slot) 'connections)
+      (call-next-method)))
 
 (defclass node (unit)
   ()
@@ -128,8 +181,9 @@
       ;; Process initforms
       (loop for name in initform-slots
             for slot = (find-slot-by-name name slots)
+            for initfunction = (c2mop:slot-definition-initfunction slot)
             do (unless (slot-boundp node name)
-                 (init-slot slot (eval (c2mop:slot-definition-initform slot)))))
+                 (when initfunction (init-slot slot (funcall initfunction)))))
       node)))
 
 (defmacro define-node (name direct-superclasses direct-slots &rest options)
@@ -145,19 +199,26 @@
 (defmethod port ((node node) name)
   (port (class-of node) name))
 
-#+NIL
-(progn
-  (define-node decision ()
-    ((in :type n-port)
-     (true :type 1-port)
-     (false :type 1-port)))
+(defmethod sever ((node node))
+  (mapc #'sever (ports node)))
 
-  (define-node process ()
-    ((in :type n-port)
-     (out :type n-port)))
+(defmethod connections ((node node))
+  (reduce #'append (ports node) :key #'connections))
 
-  (let ((a (make-instance 'decision))
-        (b (make-instance 'process)))
-    (connect (port a 'true) (port b 'in))
-    (connect (port a 'false) (port a 'in))
-    (connect (port b 'out) (port a 'in))))
+(defmethod remove-connection (connection (node node) &key (test #'eql))
+  (dolist (port (ports node))
+    (remove-connection connection port :test test))
+  connection)
+
+(defmethod disconnect ((node node) (port port))
+  (dolist (other-port (ports node))
+    (disconnect other-port port)))
+
+(defmethod disconnect ((port port) (node node))
+  (dolist (other-port (ports node))
+    (disconnect port other-port)))
+
+(defmethod disconnect ((a node) (b node))
+  (dolist (a-port (ports a))
+    (dolist (b-port (ports b))
+      (disconnect a-port b-port))))
