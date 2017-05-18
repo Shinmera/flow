@@ -10,7 +10,7 @@
   :license "Artistic"
   :author "Nicolas Hafner <shinmera@tymoon.eu>"
   :maintainer "Nicolas Hafner <shinmera@tymoon.eu>"
-  :description "A sound system."
+  :description "A flowchart and generalised graph library."
   :homepage "https://github.com/Shinmera/flow"
   :serial T
   :components ((:file "package")
