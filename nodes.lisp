@@ -10,12 +10,12 @@
 (defgeneric (setf attribute) (value unit attribute))
 (defgeneric represent (unit target))
 (defgeneric sever (unit))
-(defgeneric connections (unit))
 (defgeneric ports (node))
 (defgeneric port (node name))
-(defgeneric (setf port) (port node name))
+(defgeneric connections (node port))
+(defgeneric (setf connections) (connections node port))
 (defgeneric accepting-p (connection node port))
-(defgeneric connect (from to &optional connection-type &rest initargs))
+(defgeneric connect (from from-port to to-port &optional connection-type &rest initargs))
 
 (defclass unit ()
   ())
@@ -28,6 +28,26 @@
   ((direction :initarg :direction :accessor direction))
   (:default-initargs
    :direction :left->right))
+
+(defclass port-definition (c2mop:standard-direct-slot-definition)
+  ((port-type :initarg :port-type :accessor port-type))
+  (:default-initargs
+   :port-type 'c2mop:standard-effective-slot-definition))
+
+(defclass port (unit c2mop:standard-effective-slot-definition)
+  ())
+
+(defclass n-port (port)
+  ())
+
+(defmethod accepting-p (connection node (port n-port))
+  T)
+
+(defclass 1-port (port)
+  ())
+
+(defmethod accepting-p (connection node (port 1-port))
+  (null (connections node port)))
 
 (defclass node-class (standard-class)
   ())
@@ -44,15 +64,7 @@
 (defmethod c2mop:validate-superclass ((class node-class) (superclass node-class))
   T)
 
-(defclass port-definition (c2mop:standard-direct-slot-definition)
-  ((port-type :initarg :port-type :accessor port-type))
-  (:default-initargs
-   :port-type 'c2mop:standard-effective-slot-definition))
-
-(defclass port (c2mop:standard-effective-slot-definition)
-  ())
-
-(defmethod c2mop:compute-effective-slot-definition ((class port-class) name direct-slots)
+(defmethod c2mop:compute-effective-slot-definition ((class node-class) name direct-slots)
   (declare (ignore name))
   (let ((effective-slot (call-next-method)))
     (loop for direct-slot in direct-slots
@@ -63,13 +75,23 @@
                (loop-finish)))
     effective-slot))
 
-(defmethod c2mop:direct-slot-definition-class ((class port-class) &rest initargs)
+(defmethod c2mop:direct-slot-definition-class ((class node-class) &rest initargs)
   (declare (ignore initargs))
   (find-class 'port-direct-slot-definition))
 
-(defmethod c2mop:effective-slot-definition-class ((class port-class) &rest initargs)
+(defmethod c2mop:effective-slot-definition-class ((class node-class) &rest initargs)
   (declare (ignore initargs))
   (find-class 'c2mop:standard-effective-slot-definition))
+
+(defmethod ports ((node node-class))
+  (remove-if-not (lambda (slot) (typep slot 'port))
+                 (c2mop:class-slots node)))
+
+(defmethod port ((node node-class) name)
+  (let ((slot (find name (c2mop:class-slots node)
+                    :key #'c2mop:slot-definition-name)))
+    (when (typep slot 'port)
+      slot)))
 
 (defclass node (unit)
   ()
@@ -81,6 +103,24 @@
   `(defclass ,name (,@direct-superclasses node)
      ,direct-slots
      ,@options))
+
+(defmethod ports ((node node))
+  (ports (class-of node)))
+
+(defmethod port ((node node) name)
+  (port (class-of node) name))
+
+(defmethod connections (node (port port))
+  (connections node (c2mop:slot-definition-name port)))
+
+(defmethod connections ((node node) (name symbol))
+  (slot-value node name))
+
+(defmethod (setf connections) (connections node (port port))
+  (setf (connections node (c2mop:slot-definition-name port)) connections))
+
+(defmethod (setf connections) (connections (node node) (name symbol))
+  (setf (slot-value node name) connections))
 
 #+NIL
 (progn
