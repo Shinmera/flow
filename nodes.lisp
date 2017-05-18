@@ -9,7 +9,16 @@
 (defvar *resolve-port* T)
 
 (defclass unit ()
-  ())
+  ((attributes :initform (make-hash-table :test 'eql) :accessor attributes)))
+
+(defmethod attribute ((unit unit) name)
+  (gethash name (attributes unit)))
+
+(defmethod (setf attribute) (value (unit unit) name)
+  (setf (gethash name (attributes unit)) value))
+
+(defmethod remove-attribute ((unit unit) name)
+  (remhash name (attributes unit)))
 
 (defclass connection (unit)
   ((left :initarg :left :accessor left)
