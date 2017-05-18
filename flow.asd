@@ -14,7 +14,9 @@
   :homepage "https://github.com/Shinmera/flow"
   :serial T
   :components ((:file "package")
+               (:file "toolkit")
                (:file "nodes")
+               (:file "graph")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :closer-mop))
