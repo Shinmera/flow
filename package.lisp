@@ -39,6 +39,8 @@
    #:check-connection-accepted
    #:n-port
    #:1-port
+   #:in-port
+   #:out-port
    #:port-definition
    #:port-type
    #:node-class

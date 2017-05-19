@@ -71,7 +71,10 @@
 (defmethod remove-connection (connection (port port) &key (test #'eql))
   (setf (connections port) (remove connection (connections port) :test test)))
 
-(defmethod check-connection-accepted (new-connection (port port))
+(defgeneric check-connection-accepted (connection port)
+  (:method-combination progn))
+
+(defmethod check-connection-accepted progn (new-connection (port port))
   (loop for connection in (connections port)
         do (when (connection= connection new-connection)
              (error "An equivalent connection already exists."))))
@@ -85,10 +88,23 @@
 (defclass 1-port (port)
   ())
 
-(defmethod check-connection-accepted (connection (port 1-port))
-  (call-next-method)
+(defmethod check-connection-accepted progn (connection (port 1-port))
   (when (connections port)
     (error "A connection already exists on this port.")))
+
+(defclass in-port (port)
+  ())
+
+(defmethod check-connection-accepted progn ((connection directed-connection) (port in-port))
+  (unless (eql port (right connection))
+    (error "This port only allows incoming connections.")))
+
+(defclass out-port (port)
+  ())
+
+(defmethod check-connection-accepted progn ((connection directed-connection) (port in-port))
+  (unless (eql port (left connection))
+    (error "This port only allows outgoing connections.")))
 
 (defclass port-definition ()
   ((port-type :initarg :port-type :accessor port-type))
