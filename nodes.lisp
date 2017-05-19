@@ -20,6 +20,13 @@
 (defmethod remove-attribute ((unit unit) name)
   (remhash name (attributes unit)))
 
+(defmacro with-attributes (attributes unit &body body)
+  (let ((unitg (gensym "UNIT")))
+    `(let ((,unitg ,unit))
+       (symbol-macrolet ,(loop for attribute in attributes
+                               collect `(,attribute (attribute ,unitg ',attribute)))
+         ,@body))))
+
 (defclass connection (unit)
   ((left :initarg :left :accessor left)
    (right :initarg :right :accessor right)))
@@ -44,7 +51,8 @@
 
 (defclass port (unit)
   ((connections :initarg :connections :initform () :accessor connections)
-   (node :initarg :node :initform NIL :accessor node)))
+   (node :initarg :node :initform NIL :accessor node)
+   (slot :initarg :slot :initform NIL :accessor slot)))
 
 (defmethod connect ((left port) (right port) &optional (connection-type 'connection) &rest initargs)
   (let ((connection (apply #'make-instance connection-type :left left :right right initargs)))
@@ -127,19 +135,6 @@
   (declare (ignore initargs))
   (find-class 'effective-port-definition))
 
-(defmethod ports ((node node-class))
-  (loop for slot in (c2mop:class-slots node)
-        when (port-type slot)
-        collect (slot-value node (c2mop:slot-definition-name slot))))
-
-(defmethod port ((node node-class) (name symbol))
-  (let ((slot (find name (c2mop:class-slots node)
-                    :key #'c2mop:slot-definition-name)))
-    (unless (port-type slot)
-      (error "The slot ~a in ~a is not a port." name (class-name node)))
-    (let ((*resolve-port* NIL))
-      (slot-value node name))))
-
 (defmethod c2mop:slot-value-using-class ((node node-class) object (slot effective-port-definition))
   (let ((port (call-next-method)))
     (if (and (port-type slot) *resolve-port*)
@@ -148,18 +143,36 @@
 
 (defmethod (setf c2mop:slot-value-using-class) (value (node node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (setf (connections (c2mop:slot-value-using-class node object slot)) value)
+      (let ((*resolve-port* NIL))
+        (setf (connections
+               (c2mop:slot-value-using-class node object slot)) value))
       (call-next-method)))
 
 (defmethod c2mop:slot-boundp-using-class ((node node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (slot-boundp (c2mop:slot-value-using-class node object slot) 'connections)
+      (and (call-next-method)
+           (let ((*resolve-port* NIL))
+             (slot-boundp (c2mop:slot-value-using-class node object slot) 'connections)))
       (call-next-method)))
 
 (defmethod c2mop:slot-makunbound-using-class ((node node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (slot-makunbound (c2mop:slot-value-using-class node object slot) 'connections)
+      (slot-makunbound
+       (let ((*resolve-port* NIL))
+         (c2mop:slot-value-using-class node object slot)) 'connections)
       (call-next-method)))
+
+(defun port-slot-value (node name)
+  (let ((*resolve-port* NIL))
+    (slot-value node name)))
+
+(defun (setf port-slot-value) (value node name)
+  (let ((*resolve-port* NIL))
+    (setf (slot-value node name) value)))
+
+(defun port-slot-boundp (node name)
+  (let ((*resolve-port* NIL))
+    (slot-boundp node name)))
 
 (defclass node (unit)
   ()
@@ -170,14 +183,15 @@
     (flet ((init-slot (slot value)
              (let ((name (c2mop:slot-definition-name slot)))
                (if (port-type slot)
-                   (let ((port (if (slot-boundp node name)
+                   (let ((port (if (port-slot-boundp node name)
                                    (slot-value node name)
-                                   (make-instance (port-type slot) :node node))))
+                                   (make-instance (port-type slot) :node node :slot name))))
                      (unless (eql (type-of port) (port-type slot))
                        (change-class port (port-type slot)))
                      (setf (connections port) value)
-                     (setf (slot-value node name) port))
+                     (setf (port-slot-value node name) port))
                    (setf (slot-value node name) value)))))
+      ;; FIXME: handle conversion of slots between non-port-type and port-type
       ;; Process initargs
       (loop with initialized = ()
             for (key value) on initargs by #'cddr
@@ -188,11 +202,16 @@
                    (init-slot slot value)
                    (push slot initialized))))
       ;; Process initforms
+      (when (eql initform-slots T)
+        (setf initform-slots (mapcar #'c2mop:slot-definition-name slots)))
       (loop for name in initform-slots
             for slot = (find-slot-by-name name slots)
             for initfunction = (c2mop:slot-definition-initfunction slot)
             do (unless (slot-boundp node name)
-                 (when initfunction (init-slot slot (funcall initfunction)))))
+                 (cond (initfunction
+                        (init-slot slot (funcall initfunction)))
+                       ((port-type slot)
+                        (init-slot slot NIL)))))
       node)))
 
 (defmacro define-node (name direct-superclasses direct-slots &rest options)
@@ -203,10 +222,16 @@
      ,@options))
 
 (defmethod ports ((node node))
-  (ports (class-of node)))
+  (loop for slot in (c2mop:class-slots (class-of node))
+        when (port-type slot)
+        collect (port-slot-value node (c2mop:slot-definition-name slot))))
 
-(defmethod port ((node node) name)
-  (port (class-of node) name))
+(defmethod port ((node node) (name symbol))
+  (let ((slot (find name (c2mop:class-slots (class-of node))
+                    :key #'c2mop:slot-definition-name)))
+    (unless (port-type slot)
+      (error "The slot ~a in ~a is not a port." name node))
+    (port-slot-value node name)))
 
 (defmethod sever ((node node))
   (mapc #'sever (ports node)))

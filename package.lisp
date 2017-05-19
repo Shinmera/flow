@@ -8,4 +8,43 @@
 (defpackage #:flow
   (:nicknames #:org.shirakumo.flow)
   (:use #:cl)
+  ;; graph.lisp
+  (:export
+   #:visit
+   #:extract-graph
+   #:topological-sort
+   #:color-nodes
+   #:color-outputs)
+  ;; nodes.lisp
+  (:export
+   #:*resolve-port*
+   #:unit
+   #:attributes
+   #:attribute
+   #:remove-attribute
+   #:with-attributes
+   #:connection
+   #:left
+   #:right
+   #:connection=
+   #:sever
+   #:directed-connection
+   #:port
+   #:connections
+   #:node
+   #:slot
+   #:connect
+   #:disconnect
+   #:remove-connection
+   #:check-connection-accepted
+   #:n-port
+   #:1-port
+   #:port-definition
+   #:port-type
+   #:node-class
+   #:ports
+   #:port
+   #:node
+   #:define-node)
+  ;; toolkit.lisp
   (:export))
