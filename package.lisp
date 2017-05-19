@@ -13,8 +13,9 @@
    #:visit
    #:extract-graph
    #:topological-sort
+   #:color-graph
    #:color-nodes
-   #:color-outputs)
+   #:color-ports)
   ;; nodes.lisp
   (:export
    #:*resolve-port*
