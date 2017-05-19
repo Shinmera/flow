@@ -61,25 +61,23 @@
     sorted))
 
 (defun color-graph (vertices edges &optional (attribute :color))
-  (let ((available (make-array (length vertices) :initial-element T)))
+  (let ((colors (make-array (length vertices) :initial-element :available)))
     (flet ((mark-adjacent (vertex how)
              (loop for (from . to) in edges
                    do (cond ((eql vertex from)
                              (let ((color (attribute to attribute)))
-                               (when color (setf (aref available color) how))))
+                               (when color (setf (aref colors color) how))))
                             ((eql vertex to)
                              (let ((color (attribute from attribute)))
-                               (when color (setf (aref available color) how))))))))
+                               (when color (setf (aref colors color) how))))))))
       (dolist (vertex vertices vertices)
-        (mark-adjacent vertex NIL)
-        (setf (attribute vertex attribute)
-              (dotimes (i (length available))
-                (when (aref available i) (return i))))
-        (mark-adjacent vertex T)))))
+        (mark-adjacent vertex :unavailable)
+        (setf (attribute vertex attribute) (position :available colors))
+        (mark-adjacent vertex :available)))))
 
-(defun color-nodes (root-node &optional (attribute :color))
+(defun color-nodes (node &optional (attribute :color))
   (multiple-value-bind (vertices edges)
-      (extract-graph root-node)
+      (extract-graph node)
     (color-graph vertices edges attribute)))
 
 (defun color-ports (node &optional (attribute :color))
@@ -106,17 +104,15 @@
                                   (connect (left connection) other-port))
                                  (connection
                                   (cond ((eql port (left connection))
-                                         (connect other-port (right connection))
-                                         (connect (right connection) other-port))
+                                         (connect other-port (right connection)))
                                         ((eql port (right connection))
-                                         (connect (left connection) other-port)
                                          (connect other-port (left connection))))))))))
                         (port
+                         ;; Make sure to connect all ports to each other to ensure
+                         ;; that they don't get the same colour.
+                         (push port vertices)
+                         (dolist (other-port (ports node))
+                           (connect port other-port))
                          (dolist (connection (connections port))
-                           (etypecase connection
-                             (directed-connection
-                              (connect (left connection) (right connection)))
-                             (connection
-                              (connect (left connection) (right connection))
-                              (connect (right connection) (left connection)))))))))))
+                           (connect (left connection) (right connection)))))))))
     (color-graph vertices edges attribute)))
