@@ -31,6 +31,11 @@
   ((left :initarg :left :accessor left)
    (right :initarg :right :accessor right)))
 
+(defmethod print-object ((connection connection) stream)
+  (print-unreadable-object (connection stream :type T)
+    (format stream "~s ~a ~s ~a" :left (left connection)
+                                 :right (right connection))))
+
 (defmethod connection= (a b)
   (or (and (eql (left a) (left b))
            (eql (right a) (right b)))
@@ -102,7 +107,7 @@
 (defclass out-port (port)
   ())
 
-(defmethod check-connection-accepted progn ((connection directed-connection) (port in-port))
+(defmethod check-connection-accepted progn ((connection directed-connection) (port out-port))
   (unless (eql port (left connection))
     (error "This port only allows outgoing connections.")))
 
