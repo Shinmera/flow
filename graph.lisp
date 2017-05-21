@@ -60,27 +60,30 @@
       (%visit node))
     sorted))
 
-(defun color-graph (vertices edges &optional (attribute :color))
+(defun color-graph (vertices edges &key (attribute :color) (clear T))
   (let ((colors (make-array (length vertices) :initial-element :available)))
     (flet ((mark-adjacent (vertex how)
-             (loop for (from . to) in edges
+             (loop for (from to) in edges
                    do (cond ((eql vertex from)
                              (let ((color (attribute to attribute)))
                                (when color (setf (aref colors color) how))))
                             ((eql vertex to)
                              (let ((color (attribute from attribute)))
                                (when color (setf (aref colors color) how))))))))
+      (when clear
+        (dolist (vertex vertices)
+          (remove-attribute vertex attribute)))
       (dolist (vertex vertices vertices)
         (mark-adjacent vertex :unavailable)
         (setf (attribute vertex attribute) (position :available colors))
         (mark-adjacent vertex :available)))))
 
-(defun color-nodes (node &optional (attribute :color))
+(defun color-nodes (node &key (attribute :color) (clear T))
   (multiple-value-bind (vertices edges)
       (extract-graph node)
-    (color-graph vertices edges attribute)))
+    (color-graph vertices edges :attribute attribute :clear clear)))
 
-(defun color-ports (node &optional (attribute :color))
+(defun color-ports (node &key (attribute :color) (clear T))
   (let ((vertices ())
         (edges ()))
     ;; We define a custom graph building here that makes a
@@ -115,4 +118,4 @@
                            (connect port other-port))
                          (dolist (connection (connections port))
                            (connect (left connection) (right connection)))))))))
-    (color-graph vertices edges attribute)))
+    (color-graph vertices edges :attribute attribute :clear clear)))
