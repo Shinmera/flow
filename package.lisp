@@ -15,7 +15,7 @@
    #:topological-sort
    #:color-graph
    #:color-nodes
-   #:color-ports)
+   #:allocate-ports)
   ;; nodes.lisp
   (:export
    #:*resolve-port*

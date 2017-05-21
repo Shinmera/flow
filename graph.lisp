@@ -83,39 +83,45 @@
       (extract-graph node)
     (color-graph vertices edges :attribute attribute :clear clear)))
 
-(defun color-ports (node &key (attribute :color) (clear T))
-  (let ((vertices ())
-        (edges ()))
-    ;; We define a custom graph building here that makes a
-    ;; graph composed solely out of the ports of the nodes.
-    ;; We specially treat ports marked as "in-ports" as
-    ;; they should not receive a colour of their own.
-    ;; Instead their connections are rerouted to every non-
-    ;; in-port in the same node.
-    (flet ((connect (left right)
-             (pushnew (list left right) edges :test #'equal)))
-      (visit node (lambda (node)
-                    (dolist (port (ports node))
-                      (etypecase port
-                        (in-port
-                         ;; in-ports are pass-through to every other port in the node
-                         (dolist (connection (connections port))
-                           (dolist (other-port (ports node))
-                             (unless (typep other-port 'in-port)
-                               (etypecase connection
-                                 (directed-connection
-                                  (connect (left connection) other-port))
-                                 (connection
-                                  (cond ((eql port (left connection))
-                                         (connect other-port (right connection)))
-                                        ((eql port (right connection))
-                                         (connect other-port (left connection))))))))))
-                        (port
-                         ;; Make sure to connect all ports to each other to ensure
-                         ;; that they don't get the same colour.
-                         (push port vertices)
-                         (dolist (other-port (ports node))
-                           (connect port other-port))
-                         (dolist (connection (connections port))
-                           (connect (left connection) (right connection)))))))))
-    (color-graph vertices edges :attribute attribute :clear clear)))
+(defun allocate-ports (node &key (attribute :color) (clear T))
+  (flet ((color (port) (attribute port attribute))
+         ((setf color) (value port) (setf (attribute port attribute) value)))
+    (let ((nodes (topological-sort node))
+          (length 0))
+      (print nodes)
+      ;; Clear and count number of ports
+      (dolist (node nodes nodes)
+        (dolist (port (ports node))
+          (unless (typep port 'in-port)
+            (incf length))
+          (when clear (setf (color port) NIL))))
+      ;; Perform the actual colouring
+      (let ((colors (make-array length :initial-element :available)))
+        (flet ((mark-adjacent (node how)
+                 (dolist (connection (connections node))
+                   (cond ((eql node (node (right connection)))
+                          (when (color (left connection))
+                            (setf (aref colors (color (left connection))) how)))
+                         ((eql node (node (left connection)))
+                          (when (color (right connection))
+                            (setf (aref colors (color (right connection))) how)))))))
+          (dolist (node nodes nodes)
+            (mark-adjacent node :unavailable)
+            ;; Distribute colours across predecessor ports
+            (dolist (port (ports node))
+              (when (typep port 'in-port)
+                (dolist (connection (connections port))
+                  (let ((other (if (eql port (left connection))
+                                   (right connection)
+                                   (left connection))))
+                    (unless (color other)
+                      (let ((color (position :available colors)))
+                        (setf (color other) color)
+                        (setf (aref colors color) :unavailable)))))))
+            ;; Distribute colours across internal ports
+            (dolist (port (ports node))
+              (unless (typep port 'in-port)
+                (let ((color (position :available colors)))
+                  (setf (color port) color)
+                  (setf (aref colors color) :unavailable))))
+            (mark-adjacent node :available)))))))
