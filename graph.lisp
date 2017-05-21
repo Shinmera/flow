@@ -48,13 +48,13 @@
                   (dolist (connection (connections node))
                     (etypecase connection
                       (directed-connection
-                       (when (eql node (left connection))
-                         (%visit (right connection))))
+                       (when (eql node (node (left connection)))
+                         (%visit (node (right connection)))))
                       (connection
-                       (cond ((eql node (left connection))
-                              (%visit (right connection)))
-                             ((eql node (right connection))
-                              (%visit (left connection)))))))
+                       (cond ((eql node (node (left connection)))
+                              (%visit (node (right connection))))
+                             ((eql node (node (right connection)))
+                              (%visit (node (left connection))))))))
                   (setf (gethash node visited) :permanently)
                   (push node sorted)))))
       (%visit node))
