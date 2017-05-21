@@ -168,7 +168,7 @@
     (typecase (selected tool)
       (port
        (when (and (typep end 'port) (not (eql end (selected tool))))
-         (connect (selected tool) end))
+         (connect (selected tool) end 'directed-connection))
        (setf (selected tool) NIL))
       (node
        ))))
