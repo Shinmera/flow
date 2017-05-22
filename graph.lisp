@@ -121,7 +121,8 @@
             ;; Distribute colours across internal ports
             (dolist (port (ports node))
               (unless (typep port 'in-port)
-                (let ((color (position :available colors)))
-                  (setf (color port) color)
-                  (setf (aref colors color) :unavailable))))
+                (unless (color port)
+                  (let ((color (position :available colors)))
+                    (setf (color port) color)
+                    (setf (aref colors color) :unavailable)))))
             (mark-adjacent node :available)))))))
