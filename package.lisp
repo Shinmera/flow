@@ -13,7 +13,6 @@
    #:visit
    #:extract-graph
    #:topological-sort
-   #:color-graph
    #:color-nodes
    #:allocate-ports)
   ;; nodes.lisp
