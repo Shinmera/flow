@@ -81,7 +81,7 @@
           (setf (attribute vertex attribute) (position :available colors))
           (mark-adjacent vertex :available))))))
 
-(defun allocate-ports (nodes &key (attribute :color) (clear T))
+(defun allocate-ports (nodes &key (attribute :color) (clear T) (in-place-attribute :in-place))
   (flet ((color (port) (attribute port attribute))
          ((setf color) (value port) (setf (attribute port attribute) value)))
     (let ((nodes (topological-sort nodes))
@@ -95,6 +95,12 @@
       ;; Perform the actual colouring.
       (let ((colors (make-array length :initial-element :available)))
         (dolist (node (reverse nodes) nodes)
+          ;; If we have a port that is in-place we
+          ;; immediately release the colours to allow them
+          ;; to be re-used in predecessor ports.
+          (dolist (port (ports node))
+            (when (and (color port) (attribute port in-place-attribute))
+              (setf (aref colors (color port)) :available)))
           ;; Distribute colours across predecessor ports.
           (dolist (port (ports node))
             (when (typep port 'in-port)
