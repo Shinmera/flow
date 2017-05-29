@@ -216,8 +216,8 @@
       ;; Process initargs
       (loop with initialized = ()
             for (key value) on initargs by #'cddr
-            for slots = (find-slots-by-initarg key slots)
-            do (dolist (slot slots)
+            for init-slots = (find-slots-by-initarg key slots)
+            do (dolist (slot init-slots)
                  ;; See §7.1.4 Rules for Initialization Arguments
                  (unless (find slot initialized)
                    (init-slot slot value)
