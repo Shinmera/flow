@@ -16,6 +16,7 @@
   :components ((:file "package")
                (:file "toolkit")
                (:file "nodes")
+               (:file "static-node")
                (:file "graph")
                (:file "documentation"))
   :depends-on (:documentation-utils

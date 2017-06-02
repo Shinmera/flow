@@ -17,7 +17,6 @@
    #:allocate-ports)
   ;; nodes.lisp
   (:export
-   #:*resolve-port*
    #:unit
    #:attributes
    #:attribute
@@ -41,12 +40,17 @@
    #:1-port
    #:in-port
    #:out-port
-   #:port-definition
-   #:port-type
-   #:node-class
+   #:node
    #:ports
    #:port
-   #:node
+   #:dynamic-node)
+  ;; static-node.lisp
+  (:export
+   #:*resolve-port*
+   #:port-definition
+   #:port-type
+   #:static-node-class
+   #:static-node
    #:define-node)
   ;; toolkit.lisp
   (:export))
