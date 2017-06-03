@@ -31,7 +31,7 @@
    #:port
    #:connections
    #:node
-   #:slot
+   #:name
    #:connect
    #:disconnect
    #:remove-connection
