@@ -9,12 +9,21 @@
 (defvar *resolve-port* T)
 
 (defclass port-definition ()
-  ((port-type :initarg :port-type :accessor port-type))
+  ((port-type :initarg :port-type :accessor port-type)
+   (port-initargs :initform () :accessor port-initargs))
   (:default-initargs
    :port-type NIL))
 
 (defclass direct-port-definition (port-definition c2mop:standard-direct-slot-definition)
   ())
+
+(defmethod initialize-instance :after ((definition port-definition) &rest initargs &key &allow-other-keys)
+  (let ((initargs (copy-list initargs)))
+    (dolist (attr '(:initargs :initform :initfunction :allocation
+                    :accessor :readers :writers :port-type
+                    :type :documentation :class :name #+sbcl SB-PCL::SOURCE))
+      (remf initargs attr))
+    (setf (port-initargs definition) initargs)))
 
 (defclass effective-port-definition (port-definition c2mop:standard-effective-slot-definition)
   ())
@@ -42,6 +51,7 @@
                         (eql (c2mop:slot-definition-name direct-slot)
                              (c2mop:slot-definition-name effective-slot)))
                (setf (port-type effective-slot) (port-type direct-slot))
+               (setf (port-initargs effective-slot) (port-initargs direct-slot))
                (loop-finish)))
     effective-slot))
 
@@ -103,9 +113,9 @@
                (if (port-type slot)
                    (let ((port (if (port-slot-boundp node name)
                                    (slot-value node name)
-                                   (make-instance (port-type slot) :node node :slot name))))
-                     (unless (eql (type-of port) (port-type slot))
-                       (change-class port (port-type slot)))
+                                   (apply #'make-instance (port-type slot)
+                                          :node node :slot name (port-initargs slot)))))
+                     (apply #'change-class port (port-type slot) (port-initargs slot))
                      (setf (connections port) value)
                      (setf (port-slot-value node name) port))
                    (setf (slot-value node name) value)))))
