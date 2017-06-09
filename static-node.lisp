@@ -114,7 +114,7 @@
                    (let ((port (if (port-slot-boundp node name)
                                    (slot-value node name)
                                    (apply #'make-instance (port-type slot)
-                                          :node node :slot name (port-initargs slot)))))
+                                          :node node :name name (port-initargs slot)))))
                      (apply #'change-class port (port-type slot) (port-initargs slot))
                      (setf (connections port) value)
                      (setf (port-slot-value node name) port))
