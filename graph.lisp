@@ -91,9 +91,10 @@
       ;; Clear and count number of ports.
       (dolist (node nodes nodes)
         (dolist (port (ports node))
-          (unless (typep port 'in-port)
-            (incf length))
-          (when clear (setf (color port) NIL))))
+          (when (applicable-p port)
+            (unless (typep port 'in-port)
+              (incf length))
+            (when clear (setf (color port) NIL)))))
       ;; Perform the actual colouring.
       (let ((colors (make-array length :initial-element :available)))
         (dolist (node (reverse nodes) nodes)
@@ -110,7 +111,7 @@
                 (let ((other (if (eql port (left connection))
                                  (right connection)
                                  (left connection))))
-                  (when (and (applicable-p port) (not (color other)))
+                  (when (and (applicable-p other) (not (color other)))
                     (let ((color (position :available colors)))
                       (setf (color other) color)
                       (setf (aref colors color) :unavailable)))))))
