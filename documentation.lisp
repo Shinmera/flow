@@ -87,9 +87,18 @@ also minimising the number of necessary buffers.
 
 The given graph may not contain any cycles.
 
-Returned is a topologically sorted list of the
-inputted nodes that can be used as the execution
-order of the nodes in the graph.
+Before the nodes are processed, they are sorted by
+SORT, defaulting to a TOPOLOGICAL-SORT. The sorted
+nodes must be in such an order that the nodes
+appear in a topological order.
+
+If TEST is given, only ports for which the TEST
+function returns non-NIL are considered for the
+colouring. This allows you to distribute multiple
+colour \"kinds\" across a single graph by running
+the colouring once for each kind of colour and
+excluding the ports that should not be coloured for
+that kind.
 
 See TOPOLOGICAL-SORT"))
 

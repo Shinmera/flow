@@ -81,11 +81,13 @@
           (setf (attribute vertex attribute) (position :available colors))
           (mark-adjacent vertex :available))))))
 
-(defun allocate-ports (nodes &key (attribute :color) (clear T) (in-place-attribute :in-place))
-  (flet ((color (port) (attribute port attribute))
-         ((setf color) (value port) (setf (attribute port attribute) value)))
-    (let ((nodes (topological-sort nodes))
-          (length 0))
+(defun allocate-ports (nodes &key (attribute :color) (clear T) (in-place-attribute :in-place) test (sort #'topological-sort))
+  (let ((test (or test (constantly T)))
+        (nodes (funcall (or sort #'identity) nodes))
+        (length 0))
+    (flet ((color (port) (attribute port attribute))
+           ((setf color) (value port) (setf (attribute port attribute) value))
+           (applicable-p (port) (funcall test port)))
       ;; Clear and count number of ports.
       (dolist (node nodes nodes)
         (dolist (port (ports node))
@@ -99,7 +101,7 @@
           ;; immediately release the colours to allow them
           ;; to be re-used in predecessor ports.
           (dolist (port (ports node))
-            (when (and (color port) (attribute port in-place-attribute))
+            (when (and (applicable-p port) (color port) (attribute port in-place-attribute))
               (setf (aref colors (color port)) :available)))
           ;; Distribute colours across predecessor ports.
           (dolist (port (ports node))
@@ -108,7 +110,7 @@
                 (let ((other (if (eql port (left connection))
                                  (right connection)
                                  (left connection))))
-                  (unless (color other)
+                  (when (and (applicable-p port) (not (color other)))
                     (let ((color (position :available colors)))
                       (setf (color other) color)
                       (setf (aref colors color) :unavailable)))))))
@@ -116,11 +118,11 @@
           ;; This only happens if a node has unconnected ports.
           (dolist (port (ports node))
             (unless (typep port 'in-port)
-              (unless (color port)
+              (when (and (applicable-p port) (not (color port)))
                 (let ((color (position :available colors)))
                   (setf (color port) color)
                   (setf (aref colors color) :unavailable)))))
           ;; Mark own as available again.
           (dolist (port (ports node))
-            (when (color port)
+            (when (and (applicable-p port) (color port))
               (setf (aref colors (color port)) :available))))))))
