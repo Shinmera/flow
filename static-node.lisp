@@ -13,11 +13,11 @@
             ,(if accessor
                  `(,accessor ,port-class)
                  `(slot-value ,port-class ,slot)))
-
+          
           (defmethod (setf port-value) (value (,port-class ,port-class))
-            (setf (if accessor
-                      `(,accessor ,port-class)
-                      `(slot-value ,port-class ,slot))
+            (setf ,(if accessor
+                       `(,accessor ,port-class)
+                       `(slot-value ,port-class ,slot))
                   value))
 
           (defmethod port-value-boundp ((,port-class ,port-class))
