@@ -8,6 +8,26 @@
 
 (defvar *resolve-port* T)
 
+(defmacro define-port-value-slot (port-class slot &optional accessor)
+  `(progn (defmethod port-value ((,port-class ,port-class))
+            ,(if accessor
+                 `(,accessor ,port-class)
+                 `(slot-value ,port-class ,slot)))
+
+          (defmethod (setf port-value) (value (,port-class ,port-class))
+            (setf (if accessor
+                      `(,accessor ,port-class)
+                      `(slot-value ,port-class ,slot))
+                  value))
+
+          (defmethod port-value-boundp ((,port-class ,port-class))
+            (slot-boundp ,port-class ',slot))
+
+          (defmethod port-value-makunbound ((,port-class ,port-class))
+            (slot-makunbound ,port-class ',slot))))
+
+(define-port-value-slot port connections connections)
+
 (defclass port-definition ()
   ((port-type :initarg :port-type :accessor port-type)
    (port-initargs :initform () :accessor port-initargs))
@@ -66,28 +86,27 @@
 (defmethod c2mop:slot-value-using-class ((node static-node-class) object (slot effective-port-definition))
   (let ((port (call-next-method)))
     (if (and (port-type slot) *resolve-port*)
-        (connections port)
+        (port-value port)
         port)))
 
 (defmethod (setf c2mop:slot-value-using-class) (value (node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
       (let ((*resolve-port* NIL))
-        (setf (connections
-               (c2mop:slot-value-using-class node object slot)) value))
+        (setf (port-value (c2mop:slot-value-using-class node object slot)) value))
       (call-next-method)))
 
 (defmethod c2mop:slot-boundp-using-class ((node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
       (and (call-next-method)
            (let ((*resolve-port* NIL))
-             (slot-boundp (c2mop:slot-value-using-class node object slot) 'connections)))
+             (port-value-boundp (c2mop:slot-value-using-class node object slot))))
       (call-next-method)))
 
 (defmethod c2mop:slot-makunbound-using-class ((node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (slot-makunbound
+      (port-value-makunbound
        (let ((*resolve-port* NIL))
-         (c2mop:slot-value-using-class node object slot)) 'connections)
+         (c2mop:slot-value-using-class node object slot)))
       (call-next-method)))
 
 (defun port-slot-value (node name)

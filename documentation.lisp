@@ -104,14 +104,6 @@ See TOPOLOGICAL-SORT"))
 
 ;; nodes.lisp
 (docs:define-docs
-  (variable *resolve-port*
-    "Whether a slot-value/slot-makunbound/slot-boundp call should resolve the port.
-
-If this is T (the default), then the port's
-slot within the object's slot is resolved,
-rather than directly resolving the slot that the
-port is itself contained in.")
-  
   (type unit
     "Superclass for all any entity in a Flow graph.
 
@@ -340,6 +332,55 @@ See NODE"))
 
 ;; static-node.lisp
 (docs:define-docs
+  (variable *resolve-port*
+    "Whether a slot-value/slot-makunbound/slot-boundp call should resolve the port.
+
+If this is T (the default), then the port's
+slot within the object's slot is resolved,
+rather than directly resolving the slot that the
+port is itself contained in.")
+    
+  (function port-value
+    "Accessor to the primary \"value\" contained in this static port.
+
+For standard ports this is the CONNECTIONS slot.
+
+See STATIC-NODE
+See PORT-VALUE-BOUNDP
+See PORT-VALUE-MAKUNBOUND
+See DEFINE-PORT-VALUE-SLOT")
+
+  (function port-value-boundp
+    "Returns non-NIL if the value slot in this static port is bound.
+
+See STATIC-NODE
+See PORT-VALUE
+See PORT-VALUE-MAKUNBOUND
+See DEFINE-PORT-VALUE-SLOT")
+
+  (function port-value-makunbound
+    "Makes the value slot in this static port unbound.
+
+See STATIC-NODE
+See PORT-VALUE
+See PORT-VALUE-BOUNDP
+See DEFINE-PORT-VALUE-SLOT")
+
+  (function define-port-value-slot
+    "Easily define a slot to be used for the port value of a port class.
+
+If ACCESSOR is given it should be a symbol denoting
+the name of an accessor responsible for getting and
+setting the appropriate value on the port. If it is
+not given, SLOT-VALUE is used instead.
+
+This automatically generates appropriate methods for
+the port value functions.
+
+See PORT-VALUE
+See PORT-VALUE-BOUNDP
+See PORT-VALUE-MAKUNBOUND")
+    
   (type port-definition
     "Superclass for port definition slot classes.
 
@@ -369,7 +410,7 @@ This class allows the usage of the :PORT-TYPE initarg
 on slots. If non-null, the slot is treated as a port
 of the node, allowing to be used for connections
 between nodes. When such a slot is accessed normally,
-it immediately resolves to the connections slot in the
+it immediately resolves to the PORT-VALUE of the
 port contained in the slot.
 
 Every port of a port-typed slot is also automatically
@@ -380,6 +421,7 @@ If an access to the actual port object contained in the
 slot is necessary, the PORT-SLOT-VALUE and
 PORT-SLOT-BOUNDP functions can be used instead.
 
+See PORT-VALUE
 See DIRECT-PORT-DEFINITION
 See EFFECTIVE-PORT-DEFINITION
 See DEFINE-NODE

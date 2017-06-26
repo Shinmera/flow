@@ -47,6 +47,10 @@
   ;; static-node.lisp
   (:export
    #:*resolve-port*
+   #:port-value
+   #:port-value-boundp
+   #:port-value-makunbound
+   #:define-port-value-slot
    #:port-definition
    #:port-type
    #:static-node-class
