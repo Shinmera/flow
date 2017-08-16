@@ -34,6 +34,9 @@
   (:default-initargs
    :port-type NIL))
 
+(defmethod port-type ((slot c2mop:slot-definition))
+  NIL)
+
 (defclass direct-port-definition (port-definition c2mop:standard-direct-slot-definition)
   ())
 
