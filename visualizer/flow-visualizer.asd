@@ -10,7 +10,9 @@
   :author "Nicolas Hafner <shinmera@tymoon.eu>"
   :maintainer "Nicolas Hafner <shinmera@tymoon.eu>"
   :description "A visualizer for the flow flowchart library."
-  :homepage "https://github.com/Shinmera/flow"
+  :homepage "https://Shinmera.github.io/flow/"
+  :bug-tracker "https://github.com/Shinmera/flow/issues"
+  :source-control (:git "https://github.com/Shinmera/flow.git")
   :serial T
   :components ((:file "package")
                (:file "nodes")
