@@ -221,7 +221,8 @@
   (setf (current tool) NIL))
 
 (defmacro define-node-tool (class)
-  (let ((tool-name (intern (format NIL "~a-~a" class 'node-tool))))
+  (let* ((*print-case* #.(readtable-case *readtable*))
+         (tool-name (intern (format NIL "~a-~a" class 'node-tool))))
     `(define-widget ,tool-name (QPushButton node-tool)
        ((node-type :initform ',class)))))
 
