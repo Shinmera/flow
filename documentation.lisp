@@ -328,7 +328,12 @@ A dynamic node's ports are allocated on a per-instance
 basis, rather than on a per-class basis like for the
 static-node.
 
-See NODE"))
+See NODE")
+
+  (function other-node
+    "Return the node on the other side of the connection.
+
+This works with both directed and undirected connections."))
 
 ;; static-node.lisp
 (docs:define-docs

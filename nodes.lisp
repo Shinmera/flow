@@ -152,3 +152,9 @@
 
 (defmethod port ((node dynamic-node) (name symbol))
   (find name (ports node) :key #'name))
+
+(defun other-node (node connection)
+  (let ((right (flow:node (flow:right connection))))
+    (if (eq right node)
+        (flow:node (flow:left connection))
+        right)))
