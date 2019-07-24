@@ -105,8 +105,8 @@ See TOPOLOGICAL-SORT")
   (function a*
     "Performs an A* shortest-path calculation.
 
-Returns a list of nodes along the shortest path,
-excluding the START, but including the GOAL.
+Returns a list of connections along the shortest
+path.
 
 START and GOAL must be nodes of the same graph.
 COST-FUN must be a function of two arguments that
