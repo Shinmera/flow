@@ -100,7 +100,21 @@ the colouring once for each kind of colour and
 excluding the ports that should not be coloured for
 that kind.
 
-See TOPOLOGICAL-SORT"))
+See TOPOLOGICAL-SORT")
+
+  (function a*
+    "Performs an A* shortest-path calculation.
+
+Returns a list of nodes along the shortest path,
+excluding the START, but including the GOAL.
+
+START and GOAL must be nodes of the same graph.
+COST-FUN must be a function of two arguments that
+returns an estimated cost to move from the first
+to the second node that is passed.
+
+Signals an error if no valid path can be found
+between START and GOAL."))
 
 ;; nodes.lisp
 (docs:define-docs

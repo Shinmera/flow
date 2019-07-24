@@ -14,7 +14,8 @@
    #:extract-graph
    #:topological-sort
    #:color-nodes
-   #:allocate-ports)
+   #:allocate-ports
+   #:a*)
   ;; nodes.lisp
   (:export
    #:unit
