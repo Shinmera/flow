@@ -158,3 +158,11 @@
     (if (eq right node)
         (flow:node (flow:left connection))
         right)))
+
+(defun target-node (node connection)
+  (let ((left (flow:node (flow:left connection))))
+    (if (eq left node)
+        (flow:node (flow:right connection))
+        (if (typep connection 'directed-connection)
+            NIL
+            left))))

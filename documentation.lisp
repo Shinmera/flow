@@ -333,7 +333,19 @@ See NODE")
   (function other-node
     "Return the node on the other side of the connection.
 
-This works with both directed and undirected connections."))
+This works with both directed and undirected connections.
+
+See TARGET-NODE")
+
+  (function target-node
+    "Return the node on the other side of the connection.
+
+If the connection is directed, the target node is only 
+returned if the left-side of the connection is the given
+node. Otherwise NIL is returned. For undirected connections
+this acts the same as OTHER-NODE.
+
+See OTHER-NODE"))
 
 ;; static-node.lisp
 (docs:define-docs

@@ -44,7 +44,8 @@
    #:ports
    #:port
    #:dynamic-node
-   #:other-node)
+   #:other-node
+   #:target-node)
   ;; static-node.lisp
   (:export
    #:*resolve-port*
