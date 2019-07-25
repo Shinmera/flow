@@ -155,7 +155,8 @@
   ((ports :initarg :ports :initform () :accessor ports)))
 
 (defmethod port ((node dynamic-node) (name symbol))
-  (find name (ports node) :key #'name))
+  (or (find name (ports node) :key #'name)
+      (error 'designator-not-a-port :port-name name :node node)))
 
 (defun other-node (node connection)
   (let ((right (flow:node (flow:right connection))))

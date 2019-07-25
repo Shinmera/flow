@@ -23,15 +23,15 @@
 
 (define-condition designator-not-a-port (flow-condition error)
   ((node :initarg :node :reader node)
-   (slot-name :initarg :slot-name :reader slot-name))
-  (:report (lambda (c s) (format s "The slot ~s on ~a is not a port."
-                                 (slot-name c) (node c)))))
+   (port-name :initarg :port-name :reader port-name))
+  (:report (lambda (c s) (format s "The name ~s does not designate a port on ~a."
+                                 (port-name c) (node c)))))
 
 (define-condition graph-structure-error (flow-condition error)
   ())
 
 (define-condition graph-contains-cycles (graph-structure-error)
-  ()
+  ((node :initarg :node :reader node))
   (:report "The graph contains cycles."))
 
 (define-condition graph-is-bipartite (graph-structure-error)

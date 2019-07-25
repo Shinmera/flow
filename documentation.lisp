@@ -8,43 +8,97 @@
 
 ;; conditions.lisp
 (docs:define-docs
-  (type flow-condition)
+  (type flow-condition
+    "Base type for all conditions from the Flow library.")
   
   (type connection-already-exists
-    "")
+    "Error signalled if an equivalent connection is added.
+
+See NEW-CONNECTION
+See OLD-CONNECTION
+See FLOW-CONDITION")
   
   (function new-connection
-    "")
+    "Returns the new connection that was attempted to be added.
+
+See CONNECTION-ALREADY-EXISTS")
   
   (function old-connection
-    "")
+    "Returns the old connection that already exists on the ports.
+
+See CONNECTION-ALREADY-EXISTS")
   
   (type illegal-connection
-    "")
+    "Error signalled if the connection is not permitted by the ports.
+
+See CONNECTION
+See MESSAGE
+See FLOW-CONDITION")
   
   (function connection
-    "")
+    "Returns the connection that could not be added.
+
+See ILLEGAL-CONNECTION")
   
   (function message
-    "")
+    "Returns a reason for the failure.
+
+See ILLEGAL-CONNECTION")
   
   (type designator-not-a-port
-    "")
+    "Error signalled when a port is accessed that does not exist.
+
+See NODE
+See PORT-NAME")
   
   (function node
-    "")
+    "Returns the node the failure is associated with.
+
+See DESIGNATOR-NOT-A-PORT")
   
-  (function slot-name
-    "")
+  (function port-name
+    "Returns the name of the port that was attempted to be accessed.
+
+See DESIGNATOR-NOT-A-PORT")
   
   (type graph-structure-error
-    "")
+    "Base type for conditions related to structural problems in graphs.
+
+These conditions are used by the various generic
+algorithms offered in Flow to signal that a
+precondition of an operation is not fulfilled in
+some way.
+
+See FLOW-CONDITION")
   
   (type graph-contains-cycles
-    "")
+    "Error signalled if the graph is cyclic.
+
+This error is signalled on algorithms that expect
+an acyclic graph.
+
+See NODE
+See GRAPH-STRUCTURE-ERROR")
   
   (type graph-is-bipartite
-    ""))
+    "Error signalled if the graph is bipartite.
+
+This error is signalled on algorithms that expect
+a singular, connected graph.
+
+See NODE-A
+See NODE-B
+See GRAPH-STRUCTURE-ERROR")
+
+  (function node-a
+    "Returns the first node associated with the failure.
+
+See GRAPH-IS-BIPARTITE")
+
+  (function node-b
+    "Returns the second node associated with the failure.
+
+See GRAPH-IS-BIPARTITE"))
 
 ;; graph.lisp
 (docs:define-docs

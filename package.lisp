@@ -22,7 +22,10 @@
    #:slot-name
    #:graph-structure-error
    #:graph-contains-cycles
-   #:graph-is-bipartite)
+   #:node
+   #:graph-is-bipartite
+   #:node-a
+   #:node-b)
   ;; graph.lisp
   (:export
    #:visit

@@ -41,7 +41,7 @@
     (labels ((%visit (node)
                (case (gethash node visited)
                  (:temporary
-                  (error 'graph-contains-cycles))
+                  (error 'graph-contains-cycles :node node))
                  (:permanently)
                  ((NIL)
                   (setf (gethash node visited) :temporary)
