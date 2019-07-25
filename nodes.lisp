@@ -91,7 +91,9 @@
 (defmethod check-connection-accepted progn (new-connection (port port))
   (loop for connection in (connections port)
         do (when (connection= connection new-connection)
-             (error "An equivalent connection already exists."))))
+             (error 'connection-already-exists
+                    :new-connection new-connection
+                    :old-connection connection))))
 
 (defmethod sever ((port port))
   (mapc #'sever (connections port)))
@@ -104,21 +106,23 @@
 
 (defmethod check-connection-accepted progn (connection (port 1-port))
   (when (connections port)
-    (error "A connection already exists on this port.")))
+    (error 'connection-already-exists
+           :new-connection connection
+           :old-connection (first (connections port)))))
 
 (defclass in-port (port)
   ())
 
 (defmethod check-connection-accepted progn ((connection directed-connection) (port in-port))
   (unless (eql port (right connection))
-    (error "This port only allows incoming connections.")))
+    (error 'illegal-connection :connection connection :message "Only incoming connections are allowed.")))
 
 (defclass out-port (port)
   ())
 
 (defmethod check-connection-accepted progn ((connection directed-connection) (port out-port))
   (unless (eql port (left connection))
-    (error "This port only allows outgoing connections.")))
+    (error 'illegal-connection :connection connection :message "Only outgoing connections are allowed.")))
 
 (defclass node (unit)
   ())

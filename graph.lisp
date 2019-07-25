@@ -41,7 +41,7 @@
     (labels ((%visit (node)
                (case (gethash node visited)
                  (:temporary
-                  (error "The graph contains cycles."))
+                  (error 'graph-contains-cycles))
                  (:permanently)
                  ((NIL)
                   (setf (gethash node visited) :temporary)
@@ -176,5 +176,4 @@
                            (setf (cost target) (+ tentative-score 
                                                   (funcall cost-fun target goal)))
                            (pushnew target open)))))))
-            finally (error "No valid path found between~%  ~a~%and~%  ~a~%"
-                           start goal)))))
+            finally (error 'graph-is-bipartite :node-a start :node-b goal)))))

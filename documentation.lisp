@@ -6,6 +6,46 @@
 
 (in-package #:org.shirakumo.flow)
 
+;; conditions.lisp
+(docs:define-docs
+  (type flow-condition)
+  
+  (type connection-already-exists
+    "")
+  
+  (function new-connection
+    "")
+  
+  (function old-connection
+    "")
+  
+  (type illegal-connection
+    "")
+  
+  (function connection
+    "")
+  
+  (function message
+    "")
+  
+  (type designator-not-a-port
+    "")
+  
+  (function node
+    "")
+  
+  (function slot-name
+    "")
+  
+  (type graph-structure-error
+    "")
+  
+  (type graph-contains-cycles
+    "")
+  
+  (type graph-is-bipartite
+    ""))
+
 ;; graph.lisp
 (docs:define-docs
   (function visit
@@ -39,7 +79,12 @@ See VISIT")
 This uses Tarjan's algorithm to compute the
 topological sorting. Note that if the given list
 of nodes does not include all reachable nodes, the
-result may be erroneous.")
+result may be erroneous.
+
+Signals an error of type GRAPH-CONTAINS-CYCLES if the
+graph contains cycles.
+
+See GRAPH-CONTAINS-CYCLES")
   
   (function color-nodes
     "Perform a graph colouring.
@@ -113,8 +158,10 @@ COST-FUN must be a function of two arguments that
 returns an estimated cost to move from the first
 to the second node that is passed.
 
-Signals an error if no valid path can be found
-between START and GOAL."))
+Signals an error of type GRAPH-IS-BIPARTITE if no
+valid path can be found between START and GOAL.
+
+See GRAPH-IS-BIPARTITE"))
 
 ;; nodes.lisp
 (docs:define-docs
@@ -287,7 +334,10 @@ See CONNECTIONS")
 If it is not accepted, an error is signalled. This
 generic function uses a PROGN method combination,
 which forces tests of all superclasses to be performed
-as well.")
+as well.
+
+See CONNECTION-ALREADY-EXISTS
+See ILLEGAL-CONNECTION")
   
   (type n-port
     "A port that accepts an arbitrary number of connections.
@@ -333,7 +383,11 @@ See NODE")
   (function port
     "Return the port object contained in the node with the specified name.
 
-See NODE")
+If the name does not designate a port, an error of type
+DESIGNATOR-NOT-A-PORT is signalled.
+
+See NODE
+See DESIGNATOR-NOT-A-PORT")
 
   (type dynamic-node
     "Superclass for all dynamic nodes.

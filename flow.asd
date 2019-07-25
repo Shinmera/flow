@@ -16,6 +16,7 @@
   :serial T
   :components ((:file "package")
                (:file "toolkit")
+               (:file "conditions")
                (:file "nodes")
                (:file "static-node")
                (:file "graph")

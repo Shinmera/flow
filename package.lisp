@@ -8,6 +8,21 @@
 (defpackage #:flow
   (:nicknames #:org.shirakumo.flow)
   (:use #:cl)
+  ;; conditions.lisp
+  (:export
+   #:flow-condition
+   #:connection-already-exists
+   #:new-connection
+   #:old-connection
+   #:illegal-connection
+   #:connection
+   #:message
+   #:designator-not-a-port
+   #:node
+   #:slot-name
+   #:graph-structure-error
+   #:graph-contains-cycles
+   #:graph-is-bipartite)
   ;; graph.lisp
   (:export
    #:visit

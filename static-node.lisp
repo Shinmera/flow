@@ -180,5 +180,5 @@
   (let ((slot (find name (c2mop:class-slots (class-of node))
                     :key #'c2mop:slot-definition-name)))
     (unless (and (typep slot 'port-definition) (port-type slot))
-      (error "The slot ~a in ~a is not a port." name node))
+      (error 'designator-not-a-port :slot-name name :node node))
     (port-slot-value node name)))
