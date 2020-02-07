@@ -94,31 +94,34 @@
 
 (defmethod (setf c2mop:slot-value-using-class) (value (node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (let ((*resolve-port* NIL))
-        (setf (port-value (c2mop:slot-value-using-class node object slot)) value))
+      (setf (port-value (port-slot-value object slot)) value)
       (call-next-method)))
 
 (defmethod c2mop:slot-boundp-using-class ((node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
       (and (call-next-method)
-           (let ((*resolve-port* NIL))
-             (port-value-boundp (c2mop:slot-value-using-class node object slot))))
+           (port-value-boundp (port-slot-value object slot)))
       (call-next-method)))
 
 (defmethod c2mop:slot-makunbound-using-class ((node static-node-class) object (slot effective-port-definition))
   (if (and (port-type slot) *resolve-port*)
-      (port-value-makunbound
-       (let ((*resolve-port* NIL))
-         (c2mop:slot-value-using-class node object slot)))
+      (port-value-makunbound (port-slot-value object slot))
       (call-next-method)))
 
-(defun port-slot-value (node name)
+(defmethod change-class :around (instance (node static-node-class) &rest initargs)
+  (declare (ignore initargs))
+  ;; The implementation might touch the slots with s-v-u-c during class change, and
+  ;; clobber the fields that way. To prevent this we revert to using standard method
+  ;; access during this time.
   (let ((*resolve-port* NIL))
-    (slot-value node name)))
+    (call-next-method)))
 
-(defun (setf port-slot-value) (value node name)
-  (let ((*resolve-port* NIL))
-    (setf (slot-value node name) value)))
+(defun port-slot-value (node slot)
+  (c2mop:standard-instance-access node (c2mop:slot-definition-location slot)))
+
+(defun (setf port-slot-value) (value node slot)
+  (setf (c2mop:standard-instance-access node (c2mop:slot-definition-location slot))
+        value))
 
 (defun port-slot-boundp (node name)
   (let ((*resolve-port* NIL))
@@ -139,7 +142,7 @@
                                           :node node :name name (port-initargs slot)))))
                      (apply #'change-class port (port-type slot) (port-initargs slot))
                      (setf (connections port) value)
-                     (setf (port-slot-value node name) port))
+                     (setf (port-slot-value node slot) port))
                    (setf (slot-value node name) value)))))
       ;; FIXME: handle conversion of slots between non-port-type and port-type
       ;; Process initargs
@@ -174,11 +177,11 @@
 (defmethod ports ((node static-node))
   (loop for slot in (c2mop:class-slots (class-of node))
         when (port-type slot)
-        collect (port-slot-value node (c2mop:slot-definition-name slot))))
+        collect (port-slot-value node slot)))
 
 (defmethod port ((node static-node) (name symbol))
   (let ((slot (find name (c2mop:class-slots (class-of node))
                     :key #'c2mop:slot-definition-name)))
     (unless (and (typep slot 'port-definition) (port-type slot))
       (error 'designator-not-a-port :port-name name :node node))
-    (port-slot-value node name)))
+    (port-slot-value node slot)))
