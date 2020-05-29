@@ -128,8 +128,9 @@
             (when (and (applicable-p port) (color port))
               (setf (aref colors (color port)) :available))))))))
 
-(defun a* (start goal cost-fun)
-  (let ((open (list start))
+(defun a* (start goal cost-fun &key test)
+  (let ((test (or test (constantly T)))
+        (open (list start))
         (source (make-hash-table :test 'eq))
         (score (make-hash-table :test 'eq))
         (cost (make-hash-table :test 'eq)))
@@ -167,7 +168,7 @@
                (dolist (port (ports current))
                  (dolist (connection (connections port))
                    (let ((target (target-node current connection)))
-                     (when target
+                     (when (and target (funcall test connection))
                        (let ((tentative-score (+ (score current) 1))
                              (score (score target)))
                          (when (or (null score) (< tentative-score score))

@@ -212,6 +212,11 @@ COST-FUN must be a function of two arguments that
 returns an estimated cost to move from the first
 to the second node that is passed.
 
+The TEST function can be used to exclude
+connections from the shortest path computation.
+Only connections for which TEST returns T will be
+considered viable for use in the path.
+
 Signals an error of type GRAPH-IS-BIPARTITE if no
 valid path can be found between START and GOAL.
 
