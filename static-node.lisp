@@ -60,25 +60,45 @@
 (defmethod c2mop:validate-superclass ((class static-node-class) (superclass static-node-class))
   T)
 
+;; SIGH. Why oh why do we have to replicate this shit just to customise the effective slot definition
+;; class conditionally.
+(defun compute-effective-slot-definition-initargs (direct-slotds)
+  (let ((args (list :name (c2mop:slot-definition-name (first direct-slotds)) :type T))
+        (_ '#:no-value))
+    (dolist (slotd direct-slotds args)
+      (when slotd
+        (when (and (eq _ (getf args :initfunction _)) (c2mop:slot-definition-initfunction slotd))
+          (setf (getf args :initfunction) (c2mop:slot-definition-initfunction slotd))
+          (setf (getf args :initform) (c2mop:slot-definition-initform slotd)))
+        (when (and (eq _ (getf args :documentation _)) (documentation slotd T))
+          (setf (getf args :documentation) (documentation slotd T)))
+        (when (and (eq _ (getf args :allocation _)) (c2mop:slot-definition-allocation slotd))
+          (setf (getf args :allocation) (c2mop:slot-definition-allocation slotd)))
+        (setf (getf args :initargs) (union (getf args :initargs) (c2mop:slot-definition-initargs slotd)))
+        (let ((slotd-type (c2mop:slot-definition-type slotd)))
+          (setf (getf args :type) (cond ((eq (getf args :type) T) slotd-type)
+                                        (T `(and ,slotd-type ,(getf args :type))))))))))
+
 (defmethod c2mop:compute-effective-slot-definition ((class static-node-class) name direct-slots)
   (declare (ignore name))
-  (let ((effective-slot (call-next-method)))
-    (loop for direct-slot in direct-slots
-          do (when (and (typep direct-slot 'port-definition)
-                        (eql (c2mop:slot-definition-name direct-slot)
-                             (c2mop:slot-definition-name effective-slot)))
-               (setf (port-type effective-slot) (port-type direct-slot))
-               (setf (port-initargs effective-slot) (port-initargs direct-slot))
-               (loop-finish)))
-    effective-slot))
+  (let* ((initargs (compute-effective-slot-definition-initargs direct-slots))
+         (slot (loop for direct in direct-slots
+                     do (when (and (typep direct 'port-definition) (port-type direct)) (return direct)))))
+    (cond (slot
+           (setf initargs (list* :port-type (port-type slot) (append (port-initargs slot) initargs)))
+           (apply #'make-instance (apply #'c2mop:effective-slot-definition-class class initargs) initargs))
+          (T
+           (call-next-method)))))
 
 (defmethod c2mop:direct-slot-definition-class ((class static-node-class) &rest initargs)
   (declare (ignore initargs))
   (find-class 'direct-port-definition))
 
-(defmethod c2mop:effective-slot-definition-class ((class static-node-class) &rest initargs)
-  (declare (ignore initargs))
-  (find-class 'effective-port-definition))
+(defmethod c2mop:effective-slot-definition-class ((class static-node-class) &rest initargs &key port-type port-initargs)
+  (declare (ignore initargs port-initargs))
+  (if port-type
+      (find-class 'effective-port-definition)
+      (call-next-method)))
 
 (defmethod c2mop:slot-value-using-class ((node static-node-class) object (slot effective-port-definition))
   (let ((port (call-next-method)))
