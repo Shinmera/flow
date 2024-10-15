@@ -16,4 +16,5 @@
                (:file "graph")
                (:file "documentation"))
   :depends-on (:documentation-utils
+               :text-draw
                :closer-mop))

@@ -62,6 +62,18 @@
   (print-unreadable-object (port stream :type T)
     (format stream "~a/~a" (node port) (name port))))
 
+(defmethod describe-object :after ((port port) stream)
+  (format stream "~&~%Connections:~%")
+  (dolist (connection (connections port))
+    (let ((other (if (eq port (left connection)) (right connection) (left connection))))
+      (cond ((not (typep connection 'directed-connection))
+             (format stream " --- "))
+            ((eq port (left connection))
+             (format stream " --> "))
+            (T
+             (format stream " <-- ")))
+      (format stream "~a ~a~%" (name other) (node other)))))
+
 (defmethod connect ((left port) (right port) &optional (connection-type 'connection) &rest initargs)
   (let ((connection (apply #'make-instance connection-type :left left :right right initargs)))
     (check-connection-accepted connection left)
@@ -120,6 +132,17 @@
 
 (defclass node (unit)
   ())
+
+(defmethod describe-object :after ((node node) stream)
+  (format stream "~&~%")
+  (flet ((filter-ports (type)
+           (loop for port in (ports node)
+                 when (typep port type)
+                 collect (if (slot-boundp node (name port))
+                             (cons (name port) (slot-value node (name port)))
+                             (name port)))))
+    (org.shirakumo.text-draw:node
+     (filter-ports 'in-port) (filter-ports 'out-port) :stream stream)))
 
 (defmethod sever ((node node))
   (mapc #'sever (ports node)))
