@@ -1,0 +1,85 @@
+<!DOCTYPE html> <html lang="EN"> <head> <meta charset="utf-8"> <title>Flow</title> <style>html body{margin:0 auto 0 auto;padding:20px;max-width:1024px;font-family:sans-serif;font-size:14pt;overflow-y:scroll;}html body a{text-decoration:none;}html body a[href]{color:#0055AA;}html body a[href]:hover{color:#0088EE;}html body pre{background:#FAFAFA;border:1px solid #DDDDDD;padding:0.75em;overflow-x:auto;}html body pre >code a[href]{color:#223388;}article.project h1{font-size:1.7em;}article.project h1,article.project h2,article.project h3,article.project h4,article.project h5,article.project h6{margin:0.2em 0 0.1em 0;text-indent:1em;}article.project >header{text-align:center;}article.project >header img.logo{display:block;margin:auto;max-height:170px;}article.project >header h1{display:inline-block;text-indent:0;font-size:2.5em;}article.project >header .version{vertical-align:bottom;}article.project >header .languages{margin-top:-0.5em;text-transform:capitalize;}article.project >header .description{margin:0;}article.project >header .pages{margin-top:0.5em;font-size:1.2em;text-transform:capitalize;}article.project >header .pages a{display:inline-block;padding:0 0.2em;}article.project >section{margin:1em 0 1em 0;}article.project >section img{max-width:100%;}article.project #index >ul{list-style:none;margin:0;padding:0;}article.project .row label{display:inline-block;min-width:8em;}article.project #system .row{display:flex;}article.project #system #dependencies{display:inline;margin:0;padding:0;}article.project #system #dependencies li{display:inline;padding:0 0.2em;}article.project #system #author label{vertical-align:top;}article.project #system #author ul{display:inline-block;margin:0;padding:0;list-style:none;}article.project #toc nav>*{margin-left:1em;display:block;}article.definition{margin:1em 0 0 0;}article.definition >header h1,article.definition >header h2,article.definition >header h3,article.definition >header h4,article.definition >header h5,article.definition >header h6{text-indent:0;display:inline-block;}article.definition >header ul{display:inline-block;list-style:none;margin:0;padding:0;}article.definition >header ul li{display:inline-block;padding:0 0.2em 0 0;}article.definition >header .visibility{display:none;}article.definition >header .visibility,article.definition >header .type{text-transform:lowercase;}article.definition >header .source-link{visibility:hidden;float:right;}article.definition >header .source-link:after{visibility:visible;content:"[SRC]";}article.definition .docstring{margin:0 0 0 1em;}article.definition .docstring pre{font-size:0.8em;white-space:pre-wrap;}.definition.package >header ul.nicknames{display:inline-block;list-style:none;margin:0;padding:0 0 0 1em;}.definition.package >header ul.nicknames li{display:inline;}.definition.package >header ul.nicknames:before{content:"(";}.definition.package >header ul.nicknames:after{content:")";}.definition.package ul.definitions{margin:0;list-style:none;padding:0 0 0 0.5em;}.definition.callable >header .name:before,.definition.type >header .name:before{content:"(";font-weight:normal;}.definition.callable >header .arguments:after,.definition.type >header .arguments:after{content:")";}.definition.callable >header .arguments .arguments:before,.definition.type >header .arguments .arguments:before{content:"(";}.definition.callable >header .arguments .argument,.definition.type >header .arguments .argument{padding:0;}.definition.callable >header .arguments .argument.lambda-list-keyword,.definition.type >header .arguments .argument.lambda-list-keyword{color:#991155;}.definition li>mark{background:none;border-left:0.3em solid #0088EE;padding-left:0.3em;display:block;}@media (min-width: 1300px){html body{padding-left:16em;}article.project #toc{margin:0;position:fixed;left:0;top:0;bottom:0;width:15em;overflow-y:auto;background:#F0F0F0;border-right:1px solid #A0A0A0;}}</style> </head> <body> <article class="project"> <header>  <img class="logo" src="flow-logo.png" alt="Logo">    <span class="version">1.0.0</span>    <p class="description">A flowchart and generalised graph library.</p>   </header> <section id="toc"> <h2>Table of Contents</h2> <nav> <a href="#project">Top</a>  <a href="#documentation">Documentation</a> <nav> <a href="#about_flow">About Flow</a>  <a href="#how_to">How To</a>  <a href="#a_flow_chart_example">A Flow Chart Example</a>  <a href="#operating_on_flow_graphs">Operating on Flow Graphs</a>  <a href="#visualising_a_flow_graph">Visualising a Flow Graph</a> </nav>  <a href="#system">System</a>  </nav> </section>  <section id="documentation"><h2 id="about_flow">About Flow</h2> <p>Flow is a flowchart graph library. Unlike other graphing libraries, this one focuses on nodes in a graph having distinct &quot;ports&quot; through which connections to other nodes are formed. This helps in many concrete scenarios where it is important to distinguish not only which nodes are connected, but also how they are connected to each other.</p> <p>Particularly, a lot of data flow and exchange problems can be reduced to such a &quot;flowchart&quot;. For example, an audio processing library may present its pipeline as a flowchart of segments that communicate with each other through audio sample buffers. Flow gives a convenient view onto this kind of problem, and even allows the generic visualisation of graphs in this format.</p> <h2 id="how_to">How To</h2> <p>In a Flow graph there's three kinds of <code>unit</code>s: <code>node</code>s, <code>port</code>s, and <code>connection</code>s. A node is analogous to a vertex in a graph, a port is analogous to a place where a connection can be made on a node, and a connection is analogous to an edge in a graph.</p> <p>Of the nodes, there's two kinds: </p> <ul> <li><code>dynamic-node</code> A dynamic node's ports are determined at runtime for each individual instance. This is useful for when you're constructing your graph out of elements that you don't know ahead of time.</li> <li><code>static-node</code> A static node's ports are determined at class definition time, and each port corresponds to a special kind of slot on the graph. This is usually what you want when you define your graph entirely yourself.</li> </ul> <p>Of the ports, there's several mixin classes that can be used to define the kind of port you want. Naturally, if you want to add extra information you can define your own port classes to use instead.</p> <ul> <li><code>n-port</code> A port that accepts an arbitrary number of connections.</li> <li><code>1-port</code> A port that only accepts a single connection.</li> <li><code>in-port</code> A port that only accepts incoming connections.</li> <li><code>out-port</code> A port that only accepts outgoing connections.</li> </ul> <p>Of the connections, only two are predefined, though it is easy to imagine situations where other kinds of connections might also come in handy.</p> <ul> <li><code>connection</code> A basic undirected connection that goes both ways.</li> <li><code>directed-connection</code> A directed connection that only goes from left to right.</li> </ul> <p>You can then manage connections between ports using <code>connect</code>, <code>disconnect</code>, and <code>sever</code>. You can also inspect nodes and ports with <code>ports</code>, and <code>connections</code>.</p> <h3 id="a_flow_chart_example">A Flow Chart Example</h3> <p>If you wanted to build a classic flow chart library, you could use something like this as your basic building blocks:</p> <pre><code>(defclass in (in-port n-port)
+  ())
+
+(defclass out (out-port 1-port)
+  ())
+
+(define-node start ()
+  ((out :port-type out)))
+
+(define-node end ()
+  ((in :port-type in)))
+
+(define-node process ()
+  ((in :port-type in)
+   (out :port-type out)))
+
+(define-node decision ()
+  ((in :port-type in)
+   (true :port-type out)
+   (false :port-type out)))
+</code></pre> <p>Using these basic classes we can then create a flow chart like this:</p> <pre><code>(let ((start (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'start))
+      (pick-library (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'process))
+      (evaluate-library (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'process))
+      (decide-if-good (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'decision))
+      (end (<a href="http://l1sp.org/cl/make-instance" class="xref">make-instance</a> 'end)))
+  (connect (port start 'out) (port pick-library 'in))
+  (connect (port pick-library 'out) (port evaluate-library 'in))
+  (connect (port evaluate-library 'out) (port decide-if-good 'in))
+  (connect (port decide-if-good 'true) (port end 'in))
+  (connect (port decide-if-good 'false) (port pick-library 'in))
+  start)
+</code></pre> <h3 id="operating_on_flow_graphs">Operating on Flow Graphs</h3> <p>Flow also includes a couple of operations to help your process the graphs you created using the library. It can do a <code>topological-sort</code>, <code>extract-graph</code> for you, <code>color-nodes</code>, and <code>allocate-ports</code>. There's also a generic <code>visit</code> to allow you to quickly traverse the graph. See the docstrings of the functions for an in-depth explanation of what they do.</p> <h3 id="visualising_a_flow_graph">Visualising a Flow Graph</h3> <p>There is an additional system included called <code>flow-visualizer</code>. This system includes a primitive graph visualizer that lets you view and edit a graph directly in a GUI. It isn't very advanced at this point, but will probably be extended in the future to a usable flowchart editor.</p> </section>    <section id="system"> <h2>System Information</h2>  <div class="row"> <label for="version">Version:</label> <a id="version">1.0.0</a> </div>   <div class="row"> <label for="dependencies">Dependencies:</label> <ul id="dependencies"><li><a class="external" href="https://Shinmera.github.io/documentation-utils/">documentation-utils</a></li><li><a class="external" href="https://shinmera.github.io/text-draw">text-draw</a></li><li><a class="external">closer-mop</a></li></ul> </div>   <div class="row" id="author"> <label for="author">Author:</label> <a href="mailto:shinmera@tymoon.eu">Yukari Hafner</a> </div>   <div class="row"> <label for="license">License:</label> <a id="license" href="https://github.com/Shinmera/flow/blob/03097eef34e6ba9406448dc5bf4b26284284e136/LICENSE">zlib</a> </div>   <div class="row"> <label for="homepage">Homepage:</label> <a id="homepage" href="https://Shinmera.github.io/flow/">https://Shinmera.github.io/flow/</a> </div>   <div class="row"> <label for="bug-tracker">Bug Tracker:</label> <a id="bug-tracker" href="https://github.com/Shinmera/flow/issues">https://github.com/Shinmera/flow/issues</a> </div>   <div class="row"> <label for="sources">Sources:</label> <a id="sources" href="https://github.com/Shinmera/flow.git">https://github.com/Shinmera/flow.git</a> </div>  </section>    </article> <script>window.addEventListener("DOMContentLoaded", function(){
+    var unmarkElement = function(el){
+        if(el.tagName === "mark" || el.tagName === "MARK"){
+            [].forEach.call(el.childNodes, function(child){
+                el.parentNode.insertBefore(child, el);
+            });
+            el.parentNode.removeChild(el);
+        }else if(el.parentNode.tagName === "mark"){
+            return unmarkElement(el.parentNode);
+        }
+        return null;
+    }
+
+    var unmarkAll = function(root){
+        root = root || document;
+        [].forEach.call(root.querySelectorAll("mark"), unmarkElement);
+    }
+    
+    var markElement = function(el){
+        if(el.parentNode.tagName === "mark" || el.parentNode.tagName === "MARK"){
+            return el.parentNode;
+        } else {
+            unmarkAll();
+            var marked = document.createElement("mark");
+            el.parentNode.insertBefore(marked, el);
+            marked.appendChild(el);
+            return marked;
+        }
+    }
+
+    var markFragmented = function(){
+        if(window.location.hash){
+            var el = document.getElementById(decodeURIComponent(window.location.hash.substr(1)));
+            if(el) markElement(el);
+        }
+    }
+
+    var registerXrefLink = function(link){
+        var el = document.getElementById(decodeURIComponent(link.getAttribute("href").substr(1)));
+        if(el){
+            link.addEventListener("click", function(){
+                markElement(el);
+            });
+        }
+    }
+
+    var registerXrefLinks = function(root){
+        root = root || document;
+        [].forEach.call(root.querySelectorAll("a.xref"), registerXrefLink);
+    }
+
+    markFragmented();
+    registerXrefLinks();
+}); </script> </body> </html> 
