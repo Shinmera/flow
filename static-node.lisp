@@ -90,9 +90,11 @@
           (T
            (call-next-method)))))
 
-(defmethod c2mop:direct-slot-definition-class ((class static-node-class) &rest initargs)
+(defmethod c2mop:direct-slot-definition-class ((class static-node-class) &rest initargs &key port-type)
   (declare (ignore initargs))
-  (find-class 'direct-port-definition))
+  (if port-type
+      (find-class 'direct-port-definition)
+      (call-next-method)))
 
 (defmethod c2mop:effective-slot-definition-class ((class static-node-class) &rest initargs &key port-type port-initargs)
   (declare (ignore initargs port-initargs))
